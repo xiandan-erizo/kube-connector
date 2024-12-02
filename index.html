@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Kubernetes Connector</title>
+    <style>
+        :root {
+            --vscode-bg: #1e1e1e;
+            --vscode-sidebar-bg: #252526;
+            --vscode-text: #cccccc;
+            --vscode-border: #454545;
+            --vscode-highlight: #37373d;
+            --vscode-blue: #0e639c;
+            --vscode-active: #094771;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: var(--vscode-bg);
+            color: var(--vscode-text);
+        }
+
+        .header {
+            padding: 10px 20px;
+            background-color: var(--vscode-sidebar-bg);
+            border-bottom: 1px solid var(--vscode-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .kubeconfig-select {
+            background-color: var(--vscode-bg);
+            color: var(--vscode-text);
+            border: 1px solid var(--vscode-border);
+            padding: 5px 10px;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .forwards-list {
+            border: 1px solid var(--vscode-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .forwards-header {
+            background-color: var(--vscode-sidebar-bg);
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 120px 120px 150px 150px 1fr 100px;
+            gap: 10px;
+            border-bottom: 1px solid var(--vscode-border);
+            font-weight: 500;
+        }
+
+        .forward-item {
+            padding: 10px 20px;
+            display: grid;
+            grid-template-columns: 120px 120px 150px 150px 1fr 100px;
+            gap: 10px;
+            border-bottom: 1px solid var(--vscode-border);
+            align-items: center;
+        }
+
+        .forward-item:hover {
+            background-color: var(--vscode-highlight);
+        }
+
+        .forward-item.active {
+            background-color: var(--vscode-active);
+        }
+
+        .add-forward {
+            background-color: var(--vscode-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .add-forward:hover {
+            opacity: 0.9;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-dot.active {
+            background-color: #3fb950;
+        }
+
+        .status-dot.inactive {
+            background-color: #6e7681;
+        }
+
+        .stop-button {
+            background-color: transparent;
+            color: var(--vscode-text);
+            border: 1px solid var(--vscode-border);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .stop-button:hover {
+            background-color: var(--vscode-highlight);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--vscode-sidebar-bg);
+            padding: 20px;
+            border-radius: 4px;
+            min-width: 400px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            background-color: var(--vscode-bg);
+            color: var(--vscode-text);
+            border: 1px solid var(--vscode-border);
+            border-radius: 4px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-actions button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal-actions .cancel {
+            background-color: transparent;
+            color: var(--vscode-text);
+            border: 1px solid var(--vscode-border);
+        }
+
+        .modal-actions .confirm {
+            background-color: var(--vscode-blue);
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+
+
+<body>
+    <div class="header">
+        <select id="kubeconfig-select" class="kubeconfig-select">
+            <option value="">Select Kubeconfig...</option>
+        </select>
+        <select id="context-select" class="kubeconfig-select">
+            <option value="">Select Context...</option>
+        </select>
+    </div>
+
+    <div class="main-content">
+        <button class="add-forward" onclick="showAddForwardModal()">New Port Forward</button>
+
+        <div class="forwards-list">
+            <div class="forwards-header">
+                <div>Local Port</div>
+                <div>Remote Port</div>
+                <div>Pod</div>
+                <div>Namespace</div>
+                <div>Status</div>
+                <div>Actions</div>
+            </div>
+            <div id="forwards-container"></div>
+        </div>
+    </div>
+
+    <div id="add-forward-modal" class="modal">
+        <div class="modal-content">
+            <h2>Add Port Forward</h2>
+            <div class="form-group">
+                <label>Namespace</label>
+                <select id="namespace-select" class="form-select">
+                    <option value="">Select Namespace...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Pod</label>
+                <select id="pod-select" class="form-select" disabled>
+                    <option value="">Select Pod...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Port</label>
+                <select id="port-select" class="form-select" disabled>
+                    <option value="">Select Port...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Local Port</label>
+                <input type="number" id="local-port-input" class="form-input">
+            </div>
+            <div class="port-info" id="port-info">
+                <!-- Port information will be displayed here -->
+            </div>
+            <div class="modal-actions">
+                <button class="cancel" onclick="hideAddForwardModal()">Cancel</button>
+                <button class="confirm" onclick="handleAddForward()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+
+</html>

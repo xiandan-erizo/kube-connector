@@ -1,0 +1,70 @@
+{
+    "name": "kube-connector",
+    "version": "1.0.0",
+    "description": "A kubernetes connector desktop app",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "debug": "electron . --trace-warnings --enable-logging",
+        "pack": "electron-builder --dir",
+        "dist": "electron-builder",
+        "dist:win": "electron-builder --win",
+        "dist:mac": "electron-builder --mac",
+        "dist:linux": "electron-builder --linux",
+        "postinstall": "electron-builder install-app-deps"
+    },
+    "dependencies": {
+        "@kubernetes/client-node": "^0.22.3",
+        "electron-store": "^8.1.0",
+        "js-yaml": "^4.1.0"
+    },
+    "devDependencies": {
+        "electron": "^28.0.0",
+        "electron-builder": "^24.0.0"
+    },
+    "build": {
+        "appId": "com.kube.connector",
+        "productName": "KubeConnector",
+        "asar": true,
+        "compression": "maximum",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "**/*",
+            "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,docs}",
+            "!**/node_modules/.bin",
+            "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+            "!.editorconfig",
+            "!**/._*",
+            "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+            "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+            "!**/{appveyor.yml,.travis.yml,circle.yml}",
+            "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+        ],
+        "extraResources": [],
+        "win": {
+            "target": [
+                "portable",
+                "nsis"
+            ],
+            "icon": "build/icon.ico"
+        },
+        "mac": {
+            "target": [
+                "dmg"
+            ],
+            "icon": "build/icon.icns"
+        },
+        "linux": {
+            "target": [
+                "AppImage"
+            ],
+            "icon": "build/icons"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true
+        }
+    }
+}
